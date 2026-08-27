@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家庭点菜</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #f5f5f5;
+            padding-bottom: 80px;
+        }
+        .header {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 { font-size: 22px; }
+        .header .user-info {
+            margin-top: 8px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .header .switch-user {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-top: 6px;
+            cursor: pointer;
+        }
+        .category {
+            padding: 12px 16px 4px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        .dish-list { padding: 0 12px; }
+        .dish-item {
+            background: white;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .dish-info { flex: 1; }
+        .dish-name { font-size: 16px; font-weight: 600; color: #333; }
+        .dish-ingredients { font-size: 12px; color: #999; margin-top: 4px; }
+        .dish-btn {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-add {
+            background: #ff6b35;
+            color: white;
+        }
+        .btn-minus {
+            background: #eee;
+            color: #666;
+            margin-right: 8px;
+        }
+        .quantity { font-size: 16px; font-weight: bold; min-width: 20px; text-align: center; }
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 12px 16px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+        .cart-info { font-size: 14px; color: #666; }
+        .cart-info span { color: #ff6b35; font-weight: bold; font-size: 18px; }
+        .submit-btn {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .orders-page { display: none; padding: 16px; }
+        .order-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .order-card h3 {
+            font-size: 16px;
+            color: #ff6b35;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .order-card .time { font-size: 12px; color: #999; font-weight: normal; }
+        .order-card ul { list-style: none; }
+        .order-card li {
+            padding: 4px 0;
+            font-size: 14px;
+            color: #555;
+            border-bottom: 1px dashed #eee;
+        }
+        .order-card li:last-child { border-bottom: none; }
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        .tab-item {
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 14px;
+            color: #999;
+            cursor: pointer;
+            border-top: 2px solid transparent;
+        }
+        .tab-item.active {
+            color: #ff6b35;
+            border-top-color: #ff6b35;
+            font-weight: bold;
+        }
+        .empty-tip {
+            text-align: center;
+            padding: 40px;
+            color: #ccc;
+            font-size: 14px;
+        }
+        .shopping-list {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .shopping-list h3 { font-size: 16px; color: #333; margin-bottom: 12px; }
+        .shopping-list .tag {
+            display: inline-block;
+            background: #fff3ed;
+            color: #ff6b35;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin: 3px 4px 3px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🍳 家庭点菜</h1>
+    <div class="user-info" id="userInfo">当前身份：请选择</div>
+    <button class="switch-user" id="switchBtn" onclick="switchUser()">切换身份</button>
+</div>
+
+<div id="selectPage" style="padding: 40px 20px; text-align: center;">
+    <h2 style="margin-bottom: 20px; color: #333;">请选择你的身份</h2>
+    <button onclick="selectUser('爸爸')" style="display:block;width:80%;margin:10px auto;padding:14px;font-size:16px;border-radius:12px;border:2px solid #ff6b35;background:white;color:#ff6b35;cursor:pointer;">👨 爸爸</button>
+    <button onclick="selectUser('妈妈')" style="display:block;width:80%;margin:10px auto;padding:14px;font-size:16px;border-radius:12px;border:2px solid #ff6b35;background:white;color:#ff6b35;cursor:pointer;">👩 妈妈</button>
+    <button onclick="selectUser('宝贝')" style="display:block;width:80%;margin:10px auto;padding:14px;font-size:16px;border-radius:12px;border:2px solid #ff6b35;background:white;color:#ff6b35;cursor:pointer;">🧒 宝贝</button>
+</div>
+
+<div id="menuPage" style="display:none;">
+    <div class="category">🥩 荤菜</div>
+    <div class="dish-list" id="meatList"></div>
+    <div class="category">🥬 素菜</div>
+    <div class="dish-list" id="vegList"></div>
+    <div class="category">🍲 汤/主食</div>
+    <div class="dish-list" id="soupList"></div>
+    <div class="bottom-bar" id="bottomBar">
+        <div class="cart-info">已选 <span id="cartCount">0</span> 道菜</div>
+        <button class="submit-btn" id="submitBtn" onclick="submitOrder()" disabled>提交点菜</button>
+    </div>
+</div>
+
+<div class="orders-page" id="ordersPage">
+    <h2 style="margin-bottom: 16px; color: #333;">📋 今日点菜汇总</h2>
+    <div id="ordersList"></div>
+    <div id="shoppingSection"></div>
+</div>
+
+<div class="tab-bar" id="tabBar" style="display:none;">
+    <div class="tab-item active" onclick="switchTab('menu')">🍽️ 点菜</div>
+    <div class="tab-item" onclick="switchTab('orders')">📋 汇总</div>
+</div>
+
+<script>
+    const dishes = [
+        { id: 1, name: '红烧肉', category: 'meat', ingredients: '五花肉、冰糖、酱油、料酒' },
+        { id: 2, name: '宫保鸡丁', category: 'meat', ingredients: '鸡胸肉、花生、干辣椒、黄瓜' },
+        { id: 3, name: '糖醋排骨', category: 'meat', ingredients: '排骨、醋、糖、酱油' },
+        { id: 4, name: '番茄炒蛋', category: 'veg', ingredients: '番茄、鸡蛋、葱' },
+        { id: 5, name: '清炒时蔬', category: 'veg', ingredients: '当季蔬菜、蒜' },
+        { id: 6, name: '麻婆豆腐', category: 'veg', ingredients: '豆腐、肉末、豆瓣酱、花椒' },
+        { id: 7, name: '酸辣土豆丝', category: 'veg', ingredients: '土豆、干辣椒、醋' },
+        { id: 8, name: '紫菜蛋花汤', category: 'soup', ingredients: '紫菜、鸡蛋、虾皮' },
+        { id: 9, name: '番茄牛腩汤', category: 'soup', ingredients: '牛腩、番茄、土豆' },
+        { id: 10, name: '蛋炒饭', category: 'soup', ingredients: '米饭、鸡蛋、葱、火腿' },
+    ];
+
+    let currentUser = '';
+    let cart = {};
+
+    function init() {
+        renderDishes();
+    }
+
+    function renderDishes() {
+        const meatList = document.getElementById('meatList');
+        const vegList = document.getElementById('vegList');
+        const soupList = document.getElementById('soupList');
+        dishes.forEach(dish => {
+            const html = `
+                <div class="dish-item" id="dish-${dish.id}">
+                    <div class="dish-info">
+                        <div class="dish-name">${dish.name}</div>
+                        <div class="dish-ingredients">食材：${dish.ingredients}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;">
+                        <button class="dish-btn btn-minus" id="minus-${dish.id}" onclick="changeQty(${dish.id}, -1)" style="display:none;">−</button>
+                        <span class="quantity" id="qty-${dish.id}"></span>
+                        <button class="dish-btn btn-add" onclick="changeQty(${dish.id}, 1)">+</button>
+                    </div>
+                </div>
+            `;
+            if (dish.category === 'meat') meatList.innerHTML += html;
+            else if (dish.category === 'veg') vegList.innerHTML += html;
+            else soupList.innerHTML += html;
+        });
+    }
+
+    function selectUser(name) {
+        currentUser = name;
+        document.getElementById('userInfo').textContent = '当前身份：' + name;
+        document.getElementById('selectPage').style.display = 'none';
+        document.getElementById('menuPage').style.display = 'block';
+        document.getElementById('tabBar').style.display = 'flex';
+        const saved = localStorage.getItem('cart_' + name);
+        if (saved) {
+            cart = JSON.parse(saved);
+            Object.keys(cart).forEach(id => updateUI(parseInt(id)));
+            updateCartCount();
+        }
+    }
+
+    function switchUser() {
+        currentUser = '';
+        cart = {};
+        document.getElementById('selectPage').style.display = 'block';
+        document.getElementById('menuPage').style.display = 'none';
+        document.getElementById('ordersPage').style.display = 'none';
+        document.getElementById('tabBar').style.display = 'none';
+        document.getElementById('userInfo').textContent = '当前身份：请选择';
+        dishes.forEach(d => {
+            document.getElementById('qty-' + d.id).textContent = '';
+            document.getElementById('minus-' + d.id).style.display = 'none';
+        });
+        updateCartCount();
+    }
+
+    function changeQty(dishId, delta) {
+        if (!cart[dishId]) cart[dishId] = 0;
+        cart[dishId] += delta;
+        if (cart[dishId] <= 0) {
+            delete cart[dishId];
+        }
+        updateUI(dishId);
+        updateCartCount();
+        localStorage.setItem('cart_' + currentUser, JSON.stringify(cart));
+    }
+
+    function updateUI(dishId) {
+        const qty = cart[dishId] || 0;
+        document.getElementById('qty-' + dishId).textContent = qty > 0 ? qty : '';
+        document.getElementById('minus-' + dishId).style.display = qty > 0 ? 'flex' : 'none';
+    }
+
+    function updateCartCount() {
+        const count = Object.values(cart).reduce((a, b) => a + b, 0);
+        document.getElementById('cartCount').textContent = count;
+        document.getElementById('submitBtn').disabled = count === 0;
+    }
+
+    function submitOrder() {
+        if (Object.keys(cart).length === 0) return;
+        const orders = JSON.parse(localStorage.getItem('orders') || '{}');
+        const today = new Date().toLocaleDateString('zh-CN');
+        if (!orders[today]) orders[today] = {};
+        orders[today][currentUser] = { ...cart, time: new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'}) };
+        localStorage.setItem('orders', JSON.stringify(orders));
+        cart = {};
+        localStorage.removeItem('cart_' + currentUser);
+        dishes.forEach(d => updateUI(d.id));
+        updateCartCount();
+        alert('点菜成功！厨师长已收到你的订单 🎉');
+    }
+
+    function switchTab(tab) {
+        const tabs = document.querySelectorAll('.tab-item');
+        tabs.forEach(t => t.classList.remove('active'));
+        if (tab === 'menu') {
+            tabs[0].classList.add('active');
+            document.getElementById('menuPage').style.display = 'block';
+            document.getElementById('ordersPage').style.display = 'none';
+            document.getElementById('bottomBar').style.display = 'flex';
+        } else {
+            tabs[1].classList.add('active');
+            document.getElementById('menuPage').style.display = 'none';
+            document.getElementById('ordersPage').style.display = 'block';
+            document.getElementById('bottomBar').style.display = 'none';
+            renderOrders();
+        }
+    }
+
+    function renderOrders() {
+        const orders = JSON.parse(localStorage.getItem('orders') || '{}');
+        const today = new Date().toLocaleDateString('zh-CN');
+        const todayOrders = orders[today] || {};
+        const container = document.getElementById('ordersList');
+        const shoppingSection = document.getElementById('shoppingSection');
+        if (Object.keys(todayOrders).length === 0) {
+            container.innerHTML = '<div class="empty-tip">今天还没有人点菜哦~</div>';
+            shoppingSection.innerHTML = '';
+            return;
+        }
+        let html = '';
+        let allIngredients = new Set();
+        Object.keys(todayOrders).forEach(user => {
+            const order = todayOrders[user];
+            html += '<div class="order-card"><h3>' + user + '的点菜 <span class="time">' + (order.time || '') + '</span></h3><ul>';
+            Object.keys(order).forEach(dishId => {
+                if (dishId === 'time') return;
+                const dish = dishes.find(d => d.id === parseInt(dishId));
+                if (dish) {
+                    html += '<li>' + dish.name + ' × ' + order[dishId] + '</li>';
+                    dish.ingredients.split('、').forEach(i => allIngredients.add(i));
+                }
+            });
+            html += '</ul></div>';
+        });
+        container.innerHTML = html;
+        if (allIngredients.size > 0) {
+            let tags = '';
+            allIngredients.forEach(i => tags += '<span class="tag">' + i + '</span>');
+            shoppingSection.innerHTML = '<div class="shopping-list"><h3>🛒 建议采购清单</h3>' + tags + '</div>';
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>
